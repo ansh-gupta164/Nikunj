@@ -6,8 +6,9 @@
 <% } %>
 
 <% if(error && error.length > 0){ %>
-    <div class="alert alert-danger alert-dismissible fade show col-6 offset-3" role="alert">
-        <%= error.join(",") %>
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    <div class="nikunj-toast toast-error">
+        <span class="toast-icon">X</span>
+        <span><%= error.join(",") %></span>
+        
     </div>
 <% } %>

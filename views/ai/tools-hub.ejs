@@ -1,0 +1,109 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="container my-5">
+    <!-- Header Banner -->
+    <div class="text-center mb-5">
+        <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill mb-2 fw-semibold">
+            <i class="fa-solid fa-wand-magic-sparkles me-1"></i> Generative AI Suite
+        </span>
+        <h1 class="fw-bold display-5 text-dark mb-2">Nikunj AI Tools</h1>
+        <p class="text-muted fs-5 mx-auto" style="max-width: 650px;">
+            Harness the power of Google Gemini AI for smart property discovery, automated copywriting, and deep review sentiment intelligence.
+        </p>
+    </div>
+
+    <!-- 3 Core Features Grid -->
+    <div class="row g-4 mb-5">
+        <!-- Feature 1: Listing Description Generator -->
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-4 hover-shadow transition-all">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="bg-danger-subtle text-danger p-3 rounded-4">
+                        <i class="fa-solid fa-pen-nib fs-3"></i>
+                    </div>
+                    <span class="badge bg-light text-muted border">Feature 1</span>
+                </div>
+                <h4 class="fw-bold text-dark mb-2">AI Listing Generator</h4>
+                <p class="text-muted mb-4 flex-grow-1">
+                    Help hosts generate attractive titles, captivating descriptions, short summaries, and bulleted highlights grounded strictly in property facts.
+                </p>
+                <ul class="list-unstyled text-muted small mb-4">
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Fact-grounded copywriting</li>
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Structured JSON output</li>
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>One-click copy & transfer</li>
+                </ul>
+                <a href="/ai/listing-generator" class="btn btn-danger w-100 rounded-3 py-2 fw-semibold">
+                    Open Generator <i class="fa-solid fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Feature 2: Review Intelligence -->
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-4 hover-shadow transition-all">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="bg-primary-subtle text-primary p-3 rounded-4">
+                        <i class="fa-solid fa-chart-pie fs-3"></i>
+                    </div>
+                    <span class="badge bg-light text-muted border">Feature 2</span>
+                </div>
+                <h4 class="fw-bold text-dark mb-2">AI Review Analyzer</h4>
+                <p class="text-muted mb-4 flex-grow-1">
+                    Extract instant customer feedback intelligence: overall sentiment, praised features, constructive criticism, and common complaints with MongoDB caching.
+                </p>
+                <ul class="list-unstyled text-muted small mb-4">
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Zero hallucination summary</li>
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Sentiment classification</li>
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Smart MongoDB caching</li>
+                </ul>
+                <a href="/ai/review-insights" class="btn btn-primary w-100 rounded-3 py-2 fw-semibold">
+                    Explore Insights <i class="fa-solid fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <!-- Feature 3: Natural Language Search -->
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-4 hover-shadow transition-all">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div class="bg-success-subtle text-success p-3 rounded-4">
+                        <i class="fa-solid fa-magnifying-glass-chart fs-3"></i>
+                    </div>
+                    <span class="badge bg-light text-muted border">Feature 3</span>
+                </div>
+                <h4 class="fw-bold text-dark mb-2">AI Natural Search</h4>
+                <p class="text-muted mb-4 flex-grow-1">
+                    Describe your ideal getaway in plain conversational English. Gemini interprets budget, destination, and ambiance into safe Mongoose database queries.
+                </p>
+                <ul class="list-unstyled text-muted small mb-4">
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Conversational discovery</li>
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Safe query parameterization</li>
+                    <li class="mb-2"><i class="fa-solid fa-check text-success me-2"></i>Match rationale explanation</li>
+                </ul>
+                <a href="/ai/search" class="btn btn-success w-100 rounded-3 py-2 fw-semibold">
+                    Search with AI <i class="fa-solid fa-arrow-right ms-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Academic & Architectural Info Card -->
+    <div class="card border-0 bg-light rounded-4 p-4 shadow-sm">
+        <div class="row align-items-center">
+            <div class="col-lg-8">
+                <h5 class="fw-bold mb-1"><i class="fa-solid fa-graduation-cap text-danger me-2"></i>Engineering Highlights</h5>
+                <p class="text-muted mb-0 small">
+                    Built with Node.js, Express, MongoDB Atlas, and Google Gemini 3.5. Employs prompt engineering, strict Joi schema validation, multi-layer error mapping, rate limiting, and defensive MongoDB query translation against NoSQL injection.
+                </p>
+            </div>
+            <div class="col-lg-4 text-lg-end mt-3 mt-lg-0">
+                <a href="/ai/status" class="btn btn-outline-dark btn-sm rounded-pill px-3">
+                    <i class="fa-solid fa-heart-pulse text-success me-1"></i> System Status
+                </a>
+                <a href="/listings" class="btn btn-outline-secondary btn-sm rounded-pill px-3 ms-1">
+                    Explore Listings
+                </a>
+            </div>
+        </div>
+    </div>
+</div>

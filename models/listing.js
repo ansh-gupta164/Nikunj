@@ -40,12 +40,24 @@ const listingSchema = new mongoose.Schema({
     owner: {
         type: Schema.Types.ObjectId,
         ref: "User",
-        require:true
+        require: true
     },
 
-
-
-
+    // AI Review Intelligence Cache (Feature 2)
+    aiReviewSummary: {
+        overallSummary: { type: String, default: "" },
+        positivePoints: [{ type: String }],
+        negativePoints: [{ type: String }],
+        commonComplaints: [{ type: String }],
+        frequentlyAppreciated: [{ type: String }],
+        sentiment: {
+            type: String,
+            enum: ["Positive", "Mostly Positive", "Mixed", "Neutral", "Mostly Negative", "Negative", "Insufficient Data"],
+            default: "Insufficient Data"
+        },
+        reviewsAnalyzedCount: { type: Number, default: 0 },
+        lastAnalyzedAt: { type: Date }
+    }
 });
 
 listingSchema.post("findOneAndDelete", async (listing) => {

@@ -50,13 +50,13 @@ module.exports.loginForm = (req, res) => {
 //login
 module.exports.login = (req, res) => {
 
-    console.log("Session inside login:", req.session);   // ADD THIS
+    console.log("Session inside login:", req.session);   
 
     
     let redirectUrl = res.locals.redirectUrl || "/listings";
     req.flash("success", "Welcome to Nikunj");
     
-    console.log("Redirecting to:", redirectUrl);         // ADD THIS
+    console.log("Redirecting to:", redirectUrl);         
 
     delete req.session.redirectUrl;
 

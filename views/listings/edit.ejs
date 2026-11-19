@@ -2,7 +2,18 @@
     <div class="row mt-3">
         <div class="col-8 offset-2">
 
-            <h1>Edit Listing</h1>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="mb-0">Edit Listing</h1>
+                <a href="/ai/listing-generator?listingId=<%= listing._id %>" class="btn btn-outline-danger btn-sm rounded-pill">
+                    <i class="fa-solid fa-wand-magic-sparkles me-1"></i>AI Listing Generator
+                </a>
+            </div>
+
+            <div id="aiEditPrefillNotice" class="alert alert-success alert-dismissible fade show d-none" role="alert">
+                <i class="fa-solid fa-wand-magic-sparkles me-2"></i>
+                <strong>Updated with Nikunj AI copy!</strong> Review your changes and click Update to save.
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
 
             <form action="/listings/<%= listing._id %>?_method=PUT" enctype="multipart/form-data" method="POST" novalidate class="needs-validation">
 
@@ -62,5 +73,33 @@
                 <br><br>
                 <br><br>
             </form>
+
+            <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const listingId = "<%= listing._id %>";
+                const prefillRaw = sessionStorage.getItem("nikunj_ai_prefill_edit_" + listingId);
+                if (prefillRaw) {
+                    try {
+                        const data = JSON.parse(prefillRaw);
+                        const titleInput = document.querySelector('input[name="listing[title]"]');
+                        const descInput = document.querySelector('textarea[name="listing[description]"]');
+                        const priceInput = document.querySelector('input[name="listing[price]"]');
+                        const locInput = document.querySelector('input[name="listing[location]"]');
+
+                        if (titleInput && data.title) titleInput.value = data.title;
+                        if (descInput && data.description) descInput.value = data.description;
+                        if (priceInput && data.price) priceInput.value = data.price;
+                        if (locInput && data.location) locInput.value = data.location;
+
+                        const notice = document.getElementById("aiEditPrefillNotice");
+                        if (notice) notice.classList.remove("d-none");
+
+                        sessionStorage.removeItem("nikunj_ai_prefill_edit_" + listingId);
+                    } catch (e) {
+                        console.error("Error reading AI edit prefill data:", e);
+                    }
+                }
+            });
+            </script>
         </div>
     </div>

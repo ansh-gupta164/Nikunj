@@ -1,7 +1,6 @@
 
-if (process.env.NODE_ENV != "production") {
-    require('dotenv').config()
-}
+require('dotenv').config();
+
 const express = require("express")
 const app = express()
 const port = process.env.PORT || 3000;
@@ -26,27 +25,32 @@ const User = require("./models/user.js")
 const listingRouter = require("./routes/listing.js")
 const reviewRouter = require("./routes/review.js")
 const userRouter = require("./routes/user.js")
+const aiRouter = require("./routes/ai.js")
 const { date } = require("joi")
 const { serialize } = require("v8")
 
 
 
-const dbUrl = process.env.ATLASDB_URL
+const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/nikunj";
 
+// Mongoose connection options (IPv4 family: 4 avoids Windows DNS lookup timeouts on Atlas SRV)
+const mongooseOptions = {
+    serverSelectionTimeoutMS: 10000,
+    socketTimeoutMS: 45000,
+    family: 4
+};
 
-main()
-    .then(() => {
-        console.log("connected to DB Nikunj");
-
-    }).catch((err) => {
-        console.log(err);
-
-    })
-
-async function main() {
-    await mongoose.connect(dbUrl)
-
+async function connectDB() {
+    try {
+        await mongoose.connect(dbUrl, mongooseOptions);
+        console.log("Connected to MongoDB Atlas: Nikunj DB");
+    } catch (err) {
+        console.error("MongoDB Atlas Connection Warning:", err.message);
+        console.warn("⚠️  Operating with degraded database connectivity. Ensure your IP is whitelisted on MongoDB Atlas.");
+    }
 }
+
+connectDB();
 
 app.engine("ejs", ejsMate)
 app.set("view engine", "ejs")
@@ -59,8 +63,9 @@ app.use(methodOverride("_method"));
 
 const store = MongoStore.create({
     mongoUrl: dbUrl,
+    mongoOptions: mongooseOptions,
     crypto: {
-        secret: process.env.SECRET,
+        secret: process.env.SECRET || "nikunjSuperSecretSessionKey2026",
     },
     touchAfter: 24 * 3600 // For lazy update.
 })
@@ -118,6 +123,7 @@ app.get("/", (req, res) => {
 //routes 
 app.use("/listings", listingRouter)
 app.use("/listings/:id/reviews", reviewRouter)
+app.use("/ai", aiRouter)
 app.use("/", userRouter)
 
 
@@ -143,9 +149,23 @@ app.use((err, req, res, next) => {
     console.log("FULL ERROR:", err);
 
     let { statusCode = 500, message = "something went wrong" } = err;
+    if (req.headers.accept && req.headers.accept.includes("application/json")) {
+        return res.status(statusCode).json({ success: false, error: message });
+    }
     res.status(statusCode).render("error.ejs", { message });
 });
 
-app.listen(port, () => {
-    console.log(`server is listening at port ${port}`);
-});
+if (require.main === module) {
+    app.listen(port, () => {
+        console.log(`server is listening at port ${port}`);
+        if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim()) {
+            console.log("Gemini API configuration: Available");
+        } else {
+            console.log("Gemini API configuration: Missing");
+            console.warn("⚠️  GEMINI_API_KEY is not configured in .env. AI listing features will be unavailable.");
+        }
+    });
+}
+
+module.exports = app;
+

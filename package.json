@@ -1,18 +1,20 @@
 {
   "engines": {
-    "node": "18.x"
+    "node": ">=18.0.0"
   },
   "name": "nikunj",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node app.js",
+    "test": "node --test test/*.test.js"
   },
   "keywords": [],
   "author": "ansh",
   "license": "ISC",
   "description": "Stay booking platform",
   "dependencies": {
+    "@google/genai": "^3.3.0",
     "cloudinary": "^1.41.0",
     "connect-flash": "^0.1.1",
     "connect-mongo": "^6.0.0",
@@ -21,6 +23,7 @@
     "ejs": "^4.0.1",
     "ejs-mate": "^4.0.0",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.4",
     "express-session": "^1.19.0",
     "joi": "^18.0.2",
     "method-override": "^3.0.0",

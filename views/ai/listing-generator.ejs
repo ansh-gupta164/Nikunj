@@ -1,0 +1,570 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="container my-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/listings" class="text-decoration-none text-muted">Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">AI Listing Generator</li>
+                </ol>
+            </nav>
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                <div>
+                    <h2 class="fw-bold mb-1">
+                        <i class="fa-solid fa-wand-magic-sparkles text-danger me-2"></i>AI Listing Generator
+                    </h2>
+                    <p class="text-muted mb-0">
+                        Create captivating, professional listing copy powered by Nikunj AI. Grounded strictly in your property facts.
+                    </p>
+                </div>
+                <% if (targetListing) { %>
+                    <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 fs-6">
+                        Editing: <%= targetListing.title %>
+                    </span>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <% if (targetListing) { %>
+        <div class="alert alert-info alert-dismissible fade show d-flex align-items-center mb-4" role="alert">
+            <i class="fa-solid fa-circle-info fs-5 me-3"></i>
+            <div>
+                You are generating refreshed content for your listing: <strong><%= targetListing.title %></strong>.
+                Once generated, you can review and apply the changes directly to your listing.
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    <% } %>
+
+    <!-- Main Grid -->
+    <div class="row g-4">
+        <!-- Input Form Column -->
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 rounded-4">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-2">
+                    <h5 class="fw-semibold mb-0">Property Details</h5>
+                    <small class="text-muted">Enter verified facts about your stay</small>
+                </div>
+                <div class="card-body px-4 pb-4 pt-2">
+                    <!-- Client Error Alert Box -->
+                    <div id="aiErrorAlert" class="alert alert-danger d-none" role="alert">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                        <span id="aiErrorMessage"></span>
+                    </div>
+
+                    <form id="aiGeneratorForm" novalidate>
+                        <% if (targetListing) { %>
+                            <input type="hidden" id="listingId" value="<%= targetListing._id %>">
+                        <% } %>
+
+                        <!-- Title / Name -->
+                        <div class="mb-3">
+                            <label for="propTitle" class="form-label fw-medium">Property Name / Working Title</label>
+                            <input type="text" class="form-control" id="propTitle" maxlength="150"
+                                placeholder="e.g. Whispering Pines Villa"
+                                value="<%= targetListing ? targetListing.title : '' %>">
+                            <div class="form-text text-muted">Optional. A placeholder or working name.</div>
+                        </div>
+
+                        <!-- Property Type & Price -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-sm-6">
+                                <label for="propType" class="form-label fw-medium">Property Type</label>
+                                <select class="form-select" id="propType">
+                                    <option value="Villa">Villa</option>
+                                    <option value="Apartment" selected>Apartment</option>
+                                    <option value="Cottage">Cottage</option>
+                                    <option value="Cabin">Cabin</option>
+                                    <option value="Resort">Resort</option>
+                                    <option value="Farmhouse">Farmhouse</option>
+                                    <option value="Homestay">Homestay</option>
+                                    <option value="Beach House">Beach House</option>
+                                    <option value="Studio">Studio</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="propPrice" class="form-label fw-medium">Price per Night (₹)</label>
+                                <input type="number" class="form-control" id="propPrice" min="0" max="100000000"
+                                    placeholder="e.g. 3500"
+                                    value="<%= targetListing ? targetListing.price : '' %>">
+                            </div>
+                        </div>
+
+                        <!-- Location -->
+                        <div class="mb-3">
+                            <label for="propLocation" class="form-label fw-medium">
+                                Location <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="propLocation" required maxlength="150"
+                                placeholder="e.g. Manali, Himachal Pradesh, India"
+                                value="<%= targetListing ? targetListing.location : '' %>">
+                            <div class="invalid-feedback">Please enter a valid location.</div>
+                        </div>
+
+                        <!-- Bedrooms & Bathrooms -->
+                        <div class="row g-2 mb-3">
+                            <div class="col-sm-6">
+                                <label for="propBedrooms" class="form-label fw-medium">Bedrooms</label>
+                                <input type="number" class="form-control" id="propBedrooms" min="0" max="100" placeholder="e.g. 2">
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="propBathrooms" class="form-label fw-medium">Bathrooms</label>
+                                <input type="number" class="form-control" id="propBathrooms" min="0" max="100" step="0.5" placeholder="e.g. 2">
+                            </div>
+                        </div>
+
+                        <!-- Amenities (Checkboxes + Custom) -->
+                        <div class="mb-3">
+                            <label class="form-label fw-medium d-block">Available Amenities & Facilities</label>
+                            <div class="d-flex flex-wrap gap-2 mb-2" id="amenitiesPills">
+                                <label class="btn btn-sm btn-outline-secondary rounded-pill">
+                                    <input type="checkbox" class="btn-check amenity-chk" value="High-Speed Wi-Fi" autocomplete="off">
+                                    <i class="fa-solid fa-wifi me-1"></i> Wi-Fi
+                                </label>
+                                <label class="btn btn-sm btn-outline-secondary rounded-pill">
+                                    <input type="checkbox" class="btn-check amenity-chk" value="Air Conditioning" autocomplete="off">
+                                    <i class="fa-solid fa-snowflake me-1"></i> AC
+                                </label>
+                                <label class="btn btn-sm btn-outline-secondary rounded-pill">
+                                    <input type="checkbox" class="btn-check amenity-chk" value="Free On-site Parking" autocomplete="off">
+                                    <i class="fa-solid fa-square-parking me-1"></i> Free Parking
+                                </label>
+                                <label class="btn btn-sm btn-outline-secondary rounded-pill">
+                                    <input type="checkbox" class="btn-check amenity-chk" value="Fully-equipped Kitchen" autocomplete="off">
+                                    <i class="fa-solid fa-kitchen-set me-1"></i> Kitchen
+                                </label>
+                                <label class="btn btn-sm btn-outline-secondary rounded-pill">
+                                    <input type="checkbox" class="btn-check amenity-chk" value="Swimming Pool" autocomplete="off">
+                                    <i class="fa-solid fa-person-swimming me-1"></i> Swimming Pool
+                                </label>
+                                <label class="btn btn-sm btn-outline-secondary rounded-pill">
+                                    <input type="checkbox" class="btn-check amenity-chk" value="Mountain View" autocomplete="off">
+                                    <i class="fa-solid fa-mountain me-1"></i> Mountain View
+                                </label>
+                                <label class="btn btn-sm btn-outline-secondary rounded-pill">
+                                    <input type="checkbox" class="btn-check amenity-chk" value="Private Balcony" autocomplete="off">
+                                    <i class="fa-solid fa-door-open me-1"></i> Balcony
+                                </label>
+                                <label class="btn btn-sm btn-outline-secondary rounded-pill">
+                                    <input type="checkbox" class="btn-check amenity-chk" value="Dedicated Workspace" autocomplete="off">
+                                    <i class="fa-solid fa-laptop me-1"></i> Workspace
+                                </label>
+                                <label class="btn btn-sm btn-outline-secondary rounded-pill">
+                                    <input type="checkbox" class="btn-check amenity-chk" value="Pet Friendly" autocomplete="off">
+                                    <i class="fa-solid fa-paw me-1"></i> Pet Friendly
+                                </label>
+                                <label class="btn btn-sm btn-outline-secondary rounded-pill">
+                                    <input type="checkbox" class="btn-check amenity-chk" value="Power Backup" autocomplete="off">
+                                    <i class="fa-solid fa-bolt me-1"></i> Power Backup
+                                </label>
+                            </div>
+                            <input type="text" class="form-control form-control-sm mt-2" id="propCustomAmenities"
+                                placeholder="Additional amenities (comma-separated, e.g. Jacuzzi, BBQ Grill, Lawn)">
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="mb-4">
+                            <label for="propAdditionalInfo" class="form-label fw-medium">Special Notes or Highlights</label>
+                            <textarea class="form-control" id="propAdditionalInfo" rows="3" maxlength="1200"
+                                placeholder="e.g. Quiet neighbourhood, wooden ceilings, walking distance to local cafes."><%= targetListing && targetListing.description ? targetListing.description : '' %></textarea>
+                            <div class="form-text text-muted">The AI will strictly stick to these verified facts without fabricating details.</div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button type="submit" id="generateBtn" class="btn btn-danger w-100 py-2 rounded-3 fw-semibold">
+                            <span id="btnSpinner" class="spinner-border spinner-border-sm me-2 d-none" role="status" aria-hidden="true"></span>
+                            <span id="btnIcon"><i class="fa-solid fa-wand-magic-sparkles me-2"></i></span>
+                            <span id="btnText">Generate with AI</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Output / Results Column -->
+        <div class="col-lg-7">
+            <!-- Initial Empty State Placeholder -->
+            <div id="aiPlaceholder" class="card shadow-sm border-0 rounded-4 h-100 d-flex justify-content-center align-items-center text-center p-5">
+                <div class="my-auto py-5">
+                    <div class="mb-3">
+                        <i class="fa-solid fa-sparkles text-danger" style="font-size: 3.5rem;"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark">Your AI-Generated Content Will Appear Here</h4>
+                    <p class="text-muted mx-auto" style="max-width: 440px;">
+                        Provide your property details on the left and click <strong>Generate with AI</strong>.
+                        You will be able to review, edit, copy, and apply the generated title, description, summary, and highlights.
+                    </p>
+                    <div class="d-inline-flex gap-2 text-muted small bg-light p-2 rounded-3">
+                        <span><i class="fa-solid fa-check text-success me-1"></i>Fact-grounded</span>
+                        <span>•</span>
+                        <span><i class="fa-solid fa-check text-success me-1"></i>No invented claims</span>
+                        <span>•</span>
+                        <span><i class="fa-solid fa-check text-success me-1"></i>Editable</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Generated Content Card (Hidden Initially) -->
+            <div id="aiResultsCard" class="card shadow-sm border-0 rounded-4 d-none">
+                <div class="card-header bg-white border-0 pt-4 px-4 pb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <span class="badge bg-success-subtle text-success border border-success-subtle mb-1">
+                            <i class="fa-solid fa-check me-1"></i>AI Generation Complete
+                        </span>
+                        <h5 class="fw-bold mb-0 text-dark">Review & Edit Generated Content</h5>
+                    </div>
+                    <button type="button" id="copyAllBtn" class="btn btn-outline-dark btn-sm rounded-3">
+                        <i class="fa-regular fa-copy me-1"></i>Copy All Content
+                    </button>
+                </div>
+
+                <div class="card-body px-4 pb-4 pt-3">
+                    <div class="alert alert-success py-2 px-3 small d-flex align-items-center mb-3">
+                        <i class="fa-solid fa-circle-check me-2"></i>
+                        <span>Content generated. Review and modify any field before applying or publishing.</span>
+                    </div>
+
+                    <!-- 1. Generated Title -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="outTitle" class="form-label fw-bold text-dark mb-0">
+                                1. Attractive Listing Title
+                            </label>
+                            <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 copy-btn" data-target="outTitle">
+                                <i class="fa-regular fa-copy me-1"></i>Copy
+                            </button>
+                        </div>
+                        <input type="text" id="outTitle" class="form-control fw-semibold" maxlength="250">
+                    </div>
+
+                    <!-- 2. Short Summary -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="outSummary" class="form-label fw-bold text-dark mb-0">
+                                2. Short Summary
+                            </label>
+                            <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 copy-btn" data-target="outSummary">
+                                <i class="fa-regular fa-copy me-1"></i>Copy
+                            </button>
+                        </div>
+                        <textarea id="outSummary" class="form-control" rows="2" maxlength="1200"></textarea>
+                    </div>
+
+                    <!-- 3. Professional Description -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="outDescription" class="form-label fw-bold text-dark mb-0">
+                                3. Professional Property Description
+                            </label>
+                            <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 copy-btn" data-target="outDescription">
+                                <i class="fa-regular fa-copy me-1"></i>Copy
+                            </button>
+                        </div>
+                        <textarea id="outDescription" class="form-control" rows="6" maxlength="6000"></textarea>
+                    </div>
+
+                    <!-- 4. Key Highlights -->
+                    <div class="mb-4">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <label for="outHighlights" class="form-label fw-bold text-dark mb-0">
+                                4. Key Highlights (One per line)
+                            </label>
+                            <button type="button" class="btn btn-link btn-sm text-decoration-none p-0 copy-btn" data-target="outHighlights">
+                                <i class="fa-regular fa-copy me-1"></i>Copy
+                            </button>
+                        </div>
+                        <textarea id="outHighlights" class="form-control" rows="4" maxlength="3000"></textarea>
+                    </div>
+
+                    <!-- Action Bar -->
+                    <div class="d-flex flex-wrap gap-2 pt-2 border-top">
+                        <% if (targetListing) { %>
+                            <button type="button" id="applyToCurrentBtn" class="btn btn-danger rounded-3 fw-semibold">
+                                <i class="fa-solid fa-floppy-disk me-1"></i>Apply to This Listing Form
+                            </button>
+                        <% } else { %>
+                            <button type="button" id="useInNewListingBtn" class="btn btn-danger rounded-3 fw-semibold">
+                                <i class="fa-solid fa-arrow-right me-1"></i>Use in New Listing
+                            </button>
+                        <% } %>
+                        <button type="button" id="regenerateBtn" class="btn btn-outline-secondary rounded-3">
+                            <i class="fa-solid fa-rotate-right me-1"></i>Regenerate
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Safe Client-Side Script -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("aiGeneratorForm");
+    const generateBtn = document.getElementById("generateBtn");
+    const btnSpinner = document.getElementById("btnSpinner");
+    const btnIcon = document.getElementById("btnIcon");
+    const btnText = document.getElementById("btnText");
+    const errorAlert = document.getElementById("aiErrorAlert");
+    const errorMessage = document.getElementById("aiErrorMessage");
+    const placeholder = document.getElementById("aiPlaceholder");
+    const resultsCard = document.getElementById("aiResultsCard");
+
+    const outTitle = document.getElementById("outTitle");
+    const outSummary = document.getElementById("outSummary");
+    const outDescription = document.getElementById("outDescription");
+    const outHighlights = document.getElementById("outHighlights");
+    const copyAllBtn = document.getElementById("copyAllBtn");
+    const applyToCurrentBtn = document.getElementById("applyToCurrentBtn");
+    const useInNewListingBtn = document.getElementById("useInNewListingBtn");
+    const regenerateBtn = document.getElementById("regenerateBtn");
+
+    function showError(msg) {
+        errorMessage.textContent = msg;
+        errorAlert.classList.remove("d-none");
+        errorAlert.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function hideError() {
+        errorAlert.classList.add("d-none");
+        errorMessage.textContent = "";
+    }
+
+    function setLoading(isLoading) {
+        if (isLoading) {
+            generateBtn.disabled = true;
+            btnSpinner.classList.remove("d-none");
+            btnIcon.classList.add("d-none");
+            btnText.textContent = "Generating with Nikunj AI...";
+            hideError();
+        } else {
+            generateBtn.disabled = false;
+            btnSpinner.classList.add("d-none");
+            btnIcon.classList.remove("d-none");
+            btnText.textContent = "Generate with AI";
+        }
+    }
+
+    // Toggle amenity pill styles on checkbox click
+    document.querySelectorAll(".amenity-chk").forEach(chk => {
+        chk.addEventListener("change", function () {
+            const label = this.closest("label");
+            if (this.checked) {
+                label.classList.remove("btn-outline-secondary");
+                label.classList.add("btn-danger", "text-white");
+            } else {
+                label.classList.remove("btn-danger", "text-white");
+                label.classList.add("btn-outline-secondary");
+            }
+        });
+    });
+
+    // Form submission handler
+    form.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        hideError();
+
+        const locationInput = document.getElementById("propLocation");
+        const locationVal = locationInput.value.trim();
+
+        if (!locationVal) {
+            locationInput.classList.add("is-invalid");
+            showError("Location is required to generate a listing.");
+            return;
+        } else {
+            locationInput.classList.remove("is-invalid");
+        }
+
+        // Collect checked amenities
+        const selectedAmenities = [];
+        document.querySelectorAll(".amenity-chk:checked").forEach(chk => {
+            selectedAmenities.push(chk.value);
+        });
+
+        const customAmenities = document.getElementById("propCustomAmenities").value.trim();
+        if (customAmenities) {
+            customAmenities.split(",").map(a => a.trim()).filter(Boolean).forEach(a => {
+                if (!selectedAmenities.includes(a)) selectedAmenities.push(a);
+            });
+        }
+
+        const priceVal = document.getElementById("propPrice").value;
+        const bedroomsVal = document.getElementById("propBedrooms").value;
+        const bathroomsVal = document.getElementById("propBathrooms").value;
+        const listingIdEl = document.getElementById("listingId");
+
+        const payload = {
+            title: document.getElementById("propTitle").value.trim(),
+            propertyType: document.getElementById("propType").value,
+            location: locationVal,
+            price: priceVal !== "" ? Number(priceVal) : null,
+            bedrooms: bedroomsVal !== "" ? Number(bedroomsVal) : null,
+            bathrooms: bathroomsVal !== "" ? Number(bathroomsVal) : null,
+            amenities: selectedAmenities,
+            additionalInfo: document.getElementById("propAdditionalInfo").value.trim(),
+            listingId: listingIdEl ? listingIdEl.value : null
+        };
+
+        setLoading(true);
+
+        try {
+            const response = await fetch("/ai/generate-listing", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                const errMsg = result.error || "Failed to generate listing content. Please try again.";
+                showError(errMsg);
+                return;
+            }
+
+            // Display results safely via DOM value property (prevents HTML injection)
+            const data = result.data;
+            outTitle.value = data.title || "";
+            outSummary.value = data.summary || "";
+            outDescription.value = data.description || "";
+            outHighlights.value = Array.isArray(data.highlights) 
+                ? data.highlights.map(h => `• ${h}`).join("\n") 
+                : (data.highlights || "");
+
+            placeholder.classList.add("d-none");
+            resultsCard.classList.remove("d-none");
+            resultsCard.scrollIntoView({ behavior: "smooth", block: "start" });
+
+        } catch (err) {
+            console.error("Fetch error:", err);
+            showError("Network error: Unable to reach the server. Please check your connection and try again.");
+        } finally {
+            setLoading(false);
+        }
+    });
+
+    // Copy to clipboard helper
+    function copyText(text, btnElement) {
+        if (!navigator.clipboard) {
+            // Fallback for older browsers
+            const temp = document.createElement("textarea");
+            temp.value = text;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            document.body.removeChild(temp);
+            showCopyFeedback(btnElement);
+            return;
+        }
+
+        navigator.clipboard.writeText(text).then(() => {
+            showCopyFeedback(btnElement);
+        }).catch(err => {
+            console.error("Clipboard copy failed:", err);
+        });
+    }
+
+    function showCopyFeedback(btn) {
+        const originalHtml = btn.innerHTML;
+        btn.innerHTML = `<i class="fa-solid fa-check me-1 text-success"></i>Copied!`;
+        setTimeout(() => {
+            btn.innerHTML = originalHtml;
+        }, 2000);
+    }
+
+    // Individual copy buttons
+    document.querySelectorAll(".copy-btn").forEach(btn => {
+        btn.addEventListener("click", function () {
+            const targetId = this.getAttribute("data-target");
+            const targetEl = document.getElementById(targetId);
+            if (targetEl && targetEl.value) {
+                copyText(targetEl.value, this);
+            }
+        });
+    });
+
+    // Copy all content button
+    if (copyAllBtn) {
+        copyAllBtn.addEventListener("click", function () {
+            const fullContent = 
+`TITLE:
+${outTitle.value}
+
+SUMMARY:
+${outSummary.value}
+
+DESCRIPTION:
+${outDescription.value}
+
+HIGHLIGHTS:
+${outHighlights.value}`;
+            copyText(fullContent, this);
+        });
+    }
+
+    // Workflow: Use in New Listing
+    if (useInNewListingBtn) {
+        useInNewListingBtn.addEventListener("click", function () {
+            const combinedDescription = 
+`${outSummary.value}
+
+${outDescription.value}
+
+Key Highlights:
+${outHighlights.value}`;
+
+            const prefillData = {
+                title: outTitle.value,
+                description: combinedDescription,
+                location: document.getElementById("propLocation").value.trim(),
+                price: document.getElementById("propPrice").value
+            };
+
+            sessionStorage.setItem("nikunj_ai_prefill", JSON.stringify(prefillData));
+            window.location.href = "/listings/new";
+        });
+    }
+
+    // Workflow: Apply to Existing Listing
+    if (applyToCurrentBtn) {
+        applyToCurrentBtn.addEventListener("click", function () {
+            const listingIdEl = document.getElementById("listingId");
+            if (!listingIdEl) return;
+            const listingId = listingIdEl.value;
+
+            const combinedDescription = 
+`${outSummary.value}
+
+${outDescription.value}
+
+Key Highlights:
+${outHighlights.value}`;
+
+            const prefillData = {
+                title: outTitle.value,
+                description: combinedDescription,
+                location: document.getElementById("propLocation").value.trim(),
+                price: document.getElementById("propPrice").value
+            };
+
+            sessionStorage.setItem("nikunj_ai_prefill_edit_" + listingId, JSON.stringify(prefillData));
+            window.location.href = `/listings/${listingId}/edit`;
+        });
+    }
+
+    // Regenerate button
+    if (regenerateBtn) {
+        regenerateBtn.addEventListener("click", function () {
+            form.requestSubmit();
+        });
+    }
+});
+</script>
+

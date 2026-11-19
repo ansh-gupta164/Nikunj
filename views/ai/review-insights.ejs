@@ -1,0 +1,279 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="container my-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/listings" class="text-decoration-none text-muted">Home</a></li>
+            <li class="breadcrumb-item"><a href="/ai/tools" class="text-decoration-none text-muted">AI Tools</a></li>
+            <li class="breadcrumb-item"><a href="/ai/review-insights" class="text-decoration-none text-muted">Review Insights</a></li>
+            <li class="breadcrumb-item active" aria-current="page"><%= listing.title %></li>
+        </ol>
+    </nav>
+
+    <!-- Property Banner Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
+        <div class="row g-0 align-items-center">
+            <div class="col-md-3">
+                <img src="<%= (listing.image && listing.image.url) ? listing.image.url : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80' %>" 
+                    alt="<%= listing.title %>" class="img-fluid w-100" style="height: 180px; object-fit: cover;">
+            </div>
+            <div class="col-md-9 p-4">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                    <div>
+                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle mb-1">
+                            <i class="fa-solid fa-chart-pie me-1"></i> AI Review Intelligence
+                        </span>
+                        <h3 class="fw-bold text-dark mb-1"><%= listing.title %></h3>
+                        <p class="text-muted mb-0 small">
+                            <i class="fa-solid fa-location-dot text-danger me-1"></i><%= listing.location %>, <%= listing.country %>
+                            • ₹<%= listing.price ? listing.price.toLocaleString("en-IN") : '0' %> / night
+                        </p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="/listings/<%= listing._id %>" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                            <i class="fa-solid fa-arrow-left me-1"></i> View Listing
+                        </a>
+                        <button id="refreshAnalysisBtn" class="btn btn-danger btn-sm rounded-pill px-3 fw-semibold">
+                            <span id="refreshSpinner" class="spinner-border spinner-border-sm me-1 d-none" role="status"></span>
+                            <i id="refreshIcon" class="fa-solid fa-arrows-rotate me-1"></i> Refresh AI Analysis
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Box for AJAX errors -->
+    <div id="aiAnalysisAlert" class="alert alert-danger d-none" role="alert">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i>
+        <span id="aiAnalysisErrorMsg"></span>
+    </div>
+
+    <% if (analysisError) { %>
+        <div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>
+            <strong>AI Service Notice:</strong> <%= analysisError %>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    <% } %>
+
+    <!-- Zero Reviews State -->
+    <% if (!listing.reviews || listing.reviews.length === 0) { %>
+        <div class="card border-0 shadow-sm rounded-4 text-center p-5 mb-5">
+            <div class="my-4">
+                <i class="fa-regular fa-comment-dots text-muted display-4 mb-3"></i>
+                <h4 class="fw-bold text-dark">No Reviews Yet</h4>
+                <p class="text-muted mx-auto" style="max-width: 450px;">
+                    This property has not received any guest reviews yet. As soon as guests post reviews,
+                    Nikunj AI will synthesize sentiment, praised amenities, and constructive feedback.
+                </p>
+                <a href="/listings/<%= listing._id %>" class="btn btn-outline-danger rounded-pill px-4">
+                    Be the First to Review
+                </a>
+            </div>
+        </div>
+    <% } else { %>
+
+    <!-- Sentiment Overview Card -->
+    <div class="card border-0 shadow-sm rounded-4 mb-4 p-4">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <h5 class="fw-bold mb-0 text-dark">
+                <i class="fa-solid fa-wand-magic-sparkles text-danger me-2"></i>Executive Review Summary
+            </h5>
+            
+            <% 
+                const sentiment = (reviewInsights && reviewInsights.sentiment) ? reviewInsights.sentiment : "Neutral";
+                let badgeClass = "bg-primary-subtle text-primary border-primary-subtle";
+                let iconClass = "fa-face-smile";
+                if (sentiment.includes("Positive")) {
+                    badgeClass = "bg-success-subtle text-success border-success-subtle";
+                    iconClass = "fa-face-laugh-beam";
+                } else if (sentiment.includes("Negative")) {
+                    badgeClass = "bg-danger-subtle text-danger border-danger-subtle";
+                    iconClass = "fa-face-frown";
+                } else if (sentiment.includes("Mixed")) {
+                    badgeClass = "bg-warning-subtle text-warning-emphasis border-warning-subtle";
+                    iconClass = "fa-face-meh";
+                }
+            %>
+
+            <span id="sentimentBadge" class="badge <%= badgeClass %> border px-3 py-2 rounded-pill fs-6">
+                <i class="fa-solid <%= iconClass %> me-1"></i> Sentiment: <span id="sentimentText"><%= sentiment %></span>
+            </span>
+        </div>
+
+        <p id="overallSummaryText" class="lead fs-6 text-dark mb-3 bg-light p-3 rounded-3 border-start border-4 border-danger">
+            <%= (reviewInsights && reviewInsights.overallSummary) ? reviewInsights.overallSummary : "Generating review insights..." %>
+        </p>
+
+        <div class="d-flex align-items-center justify-content-between flex-wrap text-muted small pt-2 border-top">
+            <div>
+                <i class="fa-solid fa-calculator me-1"></i>
+                <span id="analyzedCountText"><%= (reviewInsights && reviewInsights.reviewsAnalyzedCount) ? reviewInsights.reviewsAnalyzedCount : listing.reviews.length %></span> verified guest reviews analyzed
+            </div>
+            <div>
+                <i class="fa-regular fa-clock me-1"></i>
+                Analysis status: <span id="cacheStatusText" class="badge bg-light text-muted border"><%= (reviewInsights && reviewInsights.isCached) ? "Cached (Optimized)" : "Live Gemini AI Analysis" %></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2-Column Pros vs Cons Grid -->
+    <div class="row g-4 mb-5">
+        <!-- Positives Column -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-success-subtle text-success p-2 rounded-3 me-2">
+                        <i class="fa-solid fa-thumbs-up"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0 text-success">Frequently Appreciated</h5>
+                </div>
+                <div id="positivePointsList">
+                    <% if (reviewInsights && reviewInsights.positivePoints && reviewInsights.positivePoints.length > 0) { %>
+                        <ul class="list-group list-group-flush">
+                            <% reviewInsights.positivePoints.forEach(pt => { %>
+                                <li class="list-group-item px-0 py-2 border-0 d-flex align-items-start">
+                                    <i class="fa-solid fa-circle-check text-success mt-1 me-2 flex-shrink-0"></i>
+                                    <span><%= pt %></span>
+                                </li>
+                            <% }) %>
+                        </ul>
+                    <% } else { %>
+                        <p class="text-muted small">No specific positive highlights isolated yet.</p>
+                    <% } %>
+                </div>
+
+                <% if (reviewInsights && reviewInsights.frequentlyAppreciated && reviewInsights.frequentlyAppreciated.length > 0) { %>
+                    <div class="mt-3 pt-3 border-top">
+                        <h6 class="fw-semibold text-muted small mb-2 text-uppercase">Top Praised Amenities:</h6>
+                        <div id="appreciatedTags" class="d-flex flex-wrap gap-1">
+                            <% reviewInsights.frequentlyAppreciated.forEach(tag => { %>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle rounded-pill px-2 py-1">
+                                    <i class="fa-solid fa-star me-1"></i><%= tag %>
+                                </span>
+                            <% }) %>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Negatives & Complaints Column -->
+        <div class="col-md-6">
+            <div class="card h-100 border-0 shadow-sm rounded-4 p-4">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="bg-warning-subtle text-warning-emphasis p-2 rounded-3 me-2">
+                        <i class="fa-solid fa-triangle-exclamation"></i>
+                    </div>
+                    <h5 class="fw-bold mb-0 text-dark">Areas for Improvement</h5>
+                </div>
+                <div id="negativePointsList">
+                    <% if (reviewInsights && reviewInsights.negativePoints && reviewInsights.negativePoints.length > 0) { %>
+                        <ul class="list-group list-group-flush">
+                            <% reviewInsights.negativePoints.forEach(pt => { %>
+                                <li class="list-group-item px-0 py-2 border-0 d-flex align-items-start">
+                                    <i class="fa-solid fa-circle-exclamation text-warning mt-1 me-2 flex-shrink-0"></i>
+                                    <span><%= pt %></span>
+                                </li>
+                            <% }) %>
+                        </ul>
+                    <% } else { %>
+                        <p class="text-muted small">No recurring negative feedback reported in reviews.</p>
+                    <% } %>
+                </div>
+
+                <% if (reviewInsights && reviewInsights.commonComplaints && reviewInsights.commonComplaints.length > 0) { %>
+                    <div class="mt-3 pt-3 border-top">
+                        <h6 class="fw-semibold text-muted small mb-2 text-uppercase">Common Guest Complaints:</h6>
+                        <div id="complaintsTags" class="d-flex flex-wrap gap-1">
+                            <% reviewInsights.commonComplaints.forEach(tag => { %>
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-2 py-1">
+                                    <i class="fa-solid fa-circle-xmark me-1"></i><%= tag %>
+                                </span>
+                            <% }) %>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Actual Guest Reviews Reference -->
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h5 class="fw-bold mb-3 text-dark">
+            <i class="fa-solid fa-comments text-muted me-2"></i>Actual Guest Reviews Analyzed (<%= listing.reviews.length %>)
+        </h5>
+        <div class="row g-3">
+            <% listing.reviews.forEach(review => { %>
+                <div class="col-md-6">
+                    <div class="p-3 bg-light rounded-3 h-100 border">
+                        <div class="d-flex justify-content-between align-items-center mb-1">
+                            <span class="fw-semibold text-dark">
+                                @<%= (review.author && review.author.username) ? review.author.username : 'Guest' %>
+                            </span>
+                            <span class="badge bg-warning text-dark">
+                                <%= review.rating %> <i class="fa-solid fa-star"></i>
+                            </span>
+                        </div>
+                        <p class="text-muted small mb-0">"<%= review.comment %>"</p>
+                    </div>
+                </div>
+            <% }) %>
+        </div>
+    </div>
+
+    <% } %>
+</div>
+
+<!-- AJAX Refresh Script -->
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const refreshBtn = document.getElementById("refreshAnalysisBtn");
+    const spinner = document.getElementById("refreshSpinner");
+    const icon = document.getElementById("refreshIcon");
+    const alertBox = document.getElementById("aiAnalysisAlert");
+    const errorMsg = document.getElementById("aiAnalysisErrorMsg");
+
+    if (!refreshBtn) return;
+
+    refreshBtn.addEventListener("click", async function () {
+        refreshBtn.disabled = true;
+        spinner.classList.remove("d-none");
+        icon.classList.add("d-none");
+        alertBox.classList.add("d-none");
+
+        try {
+            const listingId = "<%= listing._id %>";
+            const response = await fetch(`/ai/review-insights/${listingId}/analyze`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                body: JSON.stringify({ forceRefresh: true })
+            });
+
+            const result = await response.json();
+            if (!response.ok || !result.success) {
+                errorMsg.textContent = result.error || "Failed to refresh AI analysis.";
+                alertBox.classList.remove("d-none");
+                return;
+            }
+
+            // Reload page to display newly persisted MongoDB cache
+            window.location.reload();
+
+        } catch (err) {
+            console.error("Analysis refresh error:", err);
+            errorMsg.textContent = "Network error communicating with server.";
+            alertBox.classList.remove("d-none");
+        } finally {
+            refreshBtn.disabled = false;
+            spinner.classList.add("d-none");
+            icon.classList.remove("d-none");
+        }
+    });
+});
+</script>

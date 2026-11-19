@@ -3,54 +3,86 @@
     background: #fe424d;
     color: #fff;
     border-radius: 25px;
-    padding: 0 1rem 0 1rem;
-
+    padding: 0.5rem 1.2rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border: none;
+    transition: all 0.2s ease;
   }
-
+  .search-btn:hover {
+    background: #e0323d;
+    color: #fff;
+  }
   .search-btn i {
-
     display: inline;
-    margin-right: 0.5rem;
+    margin-right: 0.4rem;
   }
-
- .search-input {
-  border-radius: 25px;
-  padding: 0.5rem 1rem;
-  font-size: 1rem;
-  max-width: 300px;
-}
+  .search-input {
+    border-radius: 25px;
+    padding: 0.5rem 1rem;
+    font-size: 0.95rem;
+    min-width: 280px;
+    border: 1px solid #dee2e6;
+  }
+  .search-input:focus {
+    box-shadow: 0 0 0 0.2rem rgba(254, 66, 77, 0.15);
+    border-color: #fe424d;
+  }
 </style>
-<!-- nav left  -->
-<nav class="navbar navbar-expand-md bg-body-light sticky-top border-bottom">
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg bg-white sticky-top border-bottom py-2">
   <div class="container">
-    <a class="navbar-brand" href=""><i class="fa-solid fa-globe"></i></a>
+    <a class="navbar-brand fw-bold d-flex align-items-center text-dark text-decoration-none" href="/listings">
+      <i class="fa-solid fa-globe fs-2 text-danger me-2"></i>
+      <span class="fs-4">Nikunj</span>
+      <span class="badge bg-danger text-white rounded-pill ms-2 px-2 py-1" style="font-size: 0.7rem;">AI</span>
+    </a>
+    
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavAltMarkup">
       <span class="navbar-toggler-icon"></span>
     </button>
+    
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
-        <a class="nav-link" href="/listings">Explore</a>
+      <div class="navbar-nav me-auto">
+        <a class="nav-link fw-medium" href="/listings">Explore Stays</a>
+        
+        <!-- AI Tools Dropdown -->
+        <div class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle fw-medium text-danger" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fa-solid fa-wand-magic-sparkles me-1"></i>AI Tools
+          </a>
+          <ul class="dropdown-menu border-0 shadow-sm rounded-3">
+            <li><a class="dropdown-item py-2" href="/ai/tools"><i class="fa-solid fa-cube text-danger me-2"></i>AI Tools Suite</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item py-2" href="/ai/listing-generator"><i class="fa-solid fa-pen-nib text-danger me-2"></i>AI Listing Generator</a></li>
+            <li><a class="dropdown-item py-2" href="/ai/review-insights"><i class="fa-solid fa-chart-pie text-primary me-2"></i>AI Review Intelligence</a></li>
+            <li><a class="dropdown-item py-2" href="/ai/search"><i class="fa-solid fa-magnifying-glass-chart text-success me-2"></i>AI Natural Search</a></li>
+          </ul>
+        </div>
       </div>
 
-      <!-- search  -->
-      <div class="navbar-nav ms-auto">
-        <form class="d-flex" role="search">
-          <input class="form-control me-2 search-input" type="search" placeholder="Search Destination" />
-          <button class="btn search-btn" type="submit">
+      <!-- AI Search Input in Nav -->
+      <div class="navbar-nav mx-auto my-2 my-lg-0">
+        <form class="d-flex" action="/ai/search" method="GET" role="search">
+          <input class="form-control me-2 search-input" type="search" name="q" placeholder="Ask AI: e.g. Villa in Goa under 8000" aria-label="AI Search" />
+          <button class="btn search-btn text-nowrap" type="submit">
             <i class="fa-solid fa-magnifying-glass"></i>Search
           </button>
         </form>
       </div>
-      <!-- nav right  -->
-      <div class="navbar-nav ms-auto">
-        <a class="nav-link" href="/listings/new">Become a host</a>
+
+      <!-- Right Nav -->
+      <div class="navbar-nav ms-auto align-items-lg-center">
+        <a class="nav-link fw-medium" href="/listings/new">Become a host</a>
 
         <% if(!currUser){ %>
-          <a class="nav-link" href="/signup"><b>Sign Up</b></a>
-          <a class="nav-link" href="/login"><b>Log In</b></a>
-          <% } else { %>
-            <a class="nav-link" href="/logout"><b>Log Out</b></a>
-            <% } %>
+          <a class="nav-link fw-bold" href="/signup">Sign Up</a>
+          <a class="nav-link fw-bold" href="/login">Log In</a>
+        <% } else { %>
+          <span class="navbar-text text-muted small me-2 d-none d-lg-inline">@<%= currUser.username %></span>
+          <a class="nav-link fw-bold" href="/logout">Log Out</a>
+        <% } %>
       </div>
 
     </div>

@@ -1,17 +1,21 @@
 
 const Listing = require("./models/listing");
 const Review = require("./models/review");
-const { listingSchema, reviewSchema } = require("./schema.js")
+const { listingSchema, reviewSchema, aiListingGeneratorSchema } = require("./schema.js")
 const ExpressError = require("./utils/ExpressError.js")
+const rateLimit = require("express-rate-limit");
 
 module.exports.isLoggedIn = (req, res, next) => {
     if (!req.isAuthenticated()) {
+        if (req.headers.accept && req.headers.accept.includes("application/json")) {
+            return res.status(401).json({
+                success: false,
+                error: "You must be logged in to perform this action."
+            });
+        }
         if (req.method === "GET") {
             req.session.redirectUrl = req.originalUrl;
         }
-
-        console.log("Auth:", req.isAuthenticated()); //
-        console.log("User:", req.user); //
 
         req.flash("error", "please log in")
         return res.redirect("/login")
@@ -54,7 +58,7 @@ module.exports.validateListing = (req, res, next) => {
     let { error } = listingSchema.validate(req.body)
 
     if (error) {
-        let errMsg = error.details.map((el) => (err.message).join(",")) // i made a change here
+        let errMsg = error.details.map((el) => el.message).join(",")
         throw new ExpressError(400, errMsg)
     }
     else {
@@ -72,8 +76,6 @@ module.exports.validateReview = (req, res, next) => {
     }
 }
 
-
-
 module.exports.isReviewAuthor = async (req, res, next) => {
 
     let { id, reviewId } = req.params
@@ -84,3 +86,28 @@ module.exports.isReviewAuthor = async (req, res, next) => {
     }
     next()
 }
+
+// AI Rate Limiter: 30 requests per 15 minutes per IP
+module.exports.aiRateLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 30,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        success: false,
+        error: "Too many AI generation requests from this IP. Please try again after 15 minutes."
+    }
+});
+
+// AI Listing Input Validation Middleware
+module.exports.validateAiListing = (req, res, next) => {
+    const { error } = aiListingGeneratorSchema.validate(req.body);
+    if (error) {
+        const errMsg = error.details.map((el) => el.message).join(", ");
+        if (req.headers.accept && req.headers.accept.includes("application/json")) {
+            return res.status(400).json({ success: false, error: errMsg });
+        }
+        throw new ExpressError(400, errMsg);
+    }
+    next();
+};
